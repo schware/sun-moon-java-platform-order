@@ -18,6 +18,6 @@ public class OpenApiConfig {
                         .title("sun-moon-java-platform-order API")
                         .description("DDD-based order service — REST surface of the sun-moon-java-platform Order service.")
                         .version("0.1.0"))
-                .servers(List.of(new Server().url("/")));
+                .servers(List.of(new Server().url("/order")));
     }
 }
