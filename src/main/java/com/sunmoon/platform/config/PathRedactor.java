@@ -1,20 +1,20 @@
 package com.sunmoon.platform.config;
 
 /**
- * Strips the host-specific prefix (e.g. {@code /home/schware/}) off
- * absolute filesystem paths before they reach externally-visible
- * endpoints (health details, metrics tags), keeping everything from
- * {@code apps/} onward.
+ * Replaces the container's working-directory prefix ({@code /app}, from
+ * the Dockerfile's WORKDIR) with the service name before paths reach
+ * externally-visible endpoints (health details, metrics tags).
  */
 final class PathRedactor {
 
-    private static final String MARKER = "/apps/";
+    private static final String MARKER = "/app";
+    private static final String SERVICE_NAME = "order";
 
     private PathRedactor() {
     }
 
     static String redact(String absolutePath) {
         int index = absolutePath.indexOf(MARKER);
-        return index >= 0 ? absolutePath.substring(index + 1) : absolutePath;
+        return index >= 0 ? SERVICE_NAME + absolutePath.substring(index + MARKER.length()) : absolutePath;
     }
 }
