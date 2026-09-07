@@ -1,0 +1,35 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: sun-moon-java-platform-order
+  datasource:
+    url: jdbc:postgresql://localhost:5432/order_service
+    username: sunmoon
+    password: sunmoon_dev_pw
+  sql:
+    init:
+      mode: always
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,prometheus,info
+  endpoint:
+    health:
+      show-details: always
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      orderEvents:
+        sliding-window-size: 10
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 5s
+  retry:
+    instances:
+      orderEvents:
+        max-attempts: 3
+        wait-duration: 200ms
