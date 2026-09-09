@@ -22,6 +22,7 @@ public record OrderEvent(
         Long orderId,
         String storeId,
         String customerId,
+        String menuName,
         BigDecimal amount,
         OrderStatus status,
         OrderStatus previousStatus,
@@ -30,7 +31,7 @@ public record OrderEvent(
 
     public static OrderEvent of(Order order, OrderStatus previousStatus) {
         return new OrderEvent(
-                order.id(), order.storeId(), order.customerId(), order.amount(),
+                order.id(), order.storeId(), order.customerId(), order.menuName(), order.amount(),
                 order.status(), previousStatus, order.acceptedBy(), Instant.now());
     }
 }

@@ -13,6 +13,7 @@ public record Order(
         Long id,
         String storeId,
         String customerId,
+        String menuName,
         BigDecimal amount,
         OrderStatus status,
         String acceptedBy,
@@ -24,13 +25,13 @@ public record Order(
      * does not say which shop it is for cannot be routed to a counter, and
      * defaulting it would mean guessing.
      */
-    public static Order placed(String storeId, String customerId, BigDecimal amount) {
+    public static Order placed(String storeId, String customerId, String menuName, BigDecimal amount) {
         Instant now = Instant.now();
-        return new Order(null, storeId, customerId, amount, OrderStatus.PLACED, null, now, now);
+        return new Order(null, storeId, customerId, menuName, amount, OrderStatus.PLACED, null, now, now);
     }
 
     public Order withId(long newId) {
-        return new Order(newId, storeId, customerId, amount, status, acceptedBy, placedAt, updatedAt);
+        return new Order(newId, storeId, customerId, menuName, amount, status, acceptedBy, placedAt, updatedAt);
     }
 
     /**
@@ -44,6 +45,6 @@ public record Order(
             throw new IllegalOrderTransitionException(id, status, next);
         }
         String accepter = next == OrderStatus.ACCEPTED ? deviceId : acceptedBy;
-        return new Order(id, storeId, customerId, amount, next, accepter, placedAt, Instant.now());
+        return new Order(id, storeId, customerId, menuName, amount, next, accepter, placedAt, Instant.now());
     }
 }

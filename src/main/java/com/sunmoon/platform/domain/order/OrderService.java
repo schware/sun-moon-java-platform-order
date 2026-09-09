@@ -22,8 +22,8 @@ public class OrderService {
         this.eventPublisher = eventPublisher;
     }
 
-    public Order place(String storeId, String customerId, BigDecimal amount) {
-        Order saved = orderRepository.save(Order.placed(storeId, customerId, amount));
+    public Order place(String storeId, String customerId, String menuName, BigDecimal amount) {
+        Order saved = orderRepository.save(Order.placed(storeId, customerId, menuName, amount));
         publish(OrderEvent.of(saved, null));
         return saved;
     }

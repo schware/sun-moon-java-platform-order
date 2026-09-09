@@ -18,7 +18,7 @@ class OrderStatusTest {
 
     @Test
     void walksTheHappyPathAllTheWay() {
-        Order order = Order.placed("store-01", "cust-1", new BigDecimal("42.50")).withId(1L);
+        Order order = Order.placed("store-01", "cust-1", "1메뉴", new BigDecimal("42.50")).withId(1L);
         assertEquals(OrderStatus.PLACED, order.status());
 
         order = order.movedTo(OrderStatus.ACCEPTED, "pos-01");
@@ -35,7 +35,7 @@ class OrderStatusTest {
 
     @Test
     void refusesToSkipAhead() {
-        Order placed = Order.placed("store-01", "cust-1", BigDecimal.ONE).withId(1L);
+        Order placed = Order.placed("store-01", "cust-1", "1메뉴", BigDecimal.ONE).withId(1L);
 
         assertThrows(IllegalOrderTransitionException.class,
                 () -> placed.movedTo(OrderStatus.PRODUCED, null));
@@ -45,7 +45,7 @@ class OrderStatusTest {
 
     @Test
     void refusesToGoBackwards() {
-        Order accepted = Order.placed("store-01", "cust-1", BigDecimal.ONE).withId(1L)
+        Order accepted = Order.placed("store-01", "cust-1", "1메뉴", BigDecimal.ONE).withId(1L)
                 .movedTo(OrderStatus.ACCEPTED, "pos-01");
 
         assertThrows(IllegalOrderTransitionException.class,
@@ -54,7 +54,7 @@ class OrderStatusTest {
 
     @Test
     void aRejectedOrderIsOverForGood() {
-        Order rejected = Order.placed("store-01", "cust-1", BigDecimal.ONE).withId(1L)
+        Order rejected = Order.placed("store-01", "cust-1", "1메뉴", BigDecimal.ONE).withId(1L)
                 .movedTo(OrderStatus.REJECTED, "pos-01");
 
         assertTrue(rejected.status().isFinal());
@@ -65,7 +65,7 @@ class OrderStatusTest {
 
     @Test
     void anUnacceptedOrderCanExpire() {
-        Order expired = Order.placed("store-01", "cust-1", BigDecimal.ONE).withId(1L)
+        Order expired = Order.placed("store-01", "cust-1", "1메뉴", BigDecimal.ONE).withId(1L)
                 .movedTo(OrderStatus.EXPIRED, null);
 
         assertTrue(expired.status().isFinal());
@@ -76,7 +76,7 @@ class OrderStatusTest {
     /** Expiring is only for orders nobody answered — an accepted order is somebody's now. */
     @Test
     void anAcceptedOrderCannotExpire() {
-        Order accepted = Order.placed("store-01", "cust-1", BigDecimal.ONE).withId(1L)
+        Order accepted = Order.placed("store-01", "cust-1", "1메뉴", BigDecimal.ONE).withId(1L)
                 .movedTo(OrderStatus.ACCEPTED, "pos-01");
 
         assertThrows(IllegalOrderTransitionException.class,
@@ -85,7 +85,7 @@ class OrderStatusTest {
 
     @Test
     void expiredAndRejectedAreDifferentEndings() {
-        Order base = Order.placed("store-01", "cust-1", BigDecimal.ONE).withId(1L);
+        Order base = Order.placed("store-01", "cust-1", "1메뉴", BigDecimal.ONE).withId(1L);
 
         assertEquals(OrderStatus.EXPIRED, base.movedTo(OrderStatus.EXPIRED, null).status());
         assertEquals(OrderStatus.REJECTED, base.movedTo(OrderStatus.REJECTED, "pos-01").status());
@@ -93,7 +93,7 @@ class OrderStatusTest {
 
     @Test
     void rejectingIsOnlyPossibleBeforeAcceptance() {
-        Order accepted = Order.placed("store-01", "cust-1", BigDecimal.ONE).withId(1L)
+        Order accepted = Order.placed("store-01", "cust-1", "1메뉴", BigDecimal.ONE).withId(1L)
                 .movedTo(OrderStatus.ACCEPTED, "pos-01");
 
         assertThrows(IllegalOrderTransitionException.class,
@@ -102,7 +102,7 @@ class OrderStatusTest {
 
     @Test
     void onlyTheAcceptanceRecordsATerminal() {
-        Order produced = Order.placed("store-01", "cust-1", BigDecimal.ONE).withId(1L)
+        Order produced = Order.placed("store-01", "cust-1", "1메뉴", BigDecimal.ONE).withId(1L)
                 .movedTo(OrderStatus.ACCEPTED, "pos-01")
                 // KDS is a service, not a terminal — it must not overwrite this.
                 .movedTo(OrderStatus.PRODUCED, "kds-99");

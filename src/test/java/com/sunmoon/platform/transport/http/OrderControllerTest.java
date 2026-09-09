@@ -40,17 +40,17 @@ class OrderControllerTest {
     private OrderService orderService;
 
     private static Order order(OrderStatus status, String acceptedBy) {
-        return new Order(1L, "store-01", "cust-1", new BigDecimal("42.50"), status, acceptedBy, WHEN, WHEN);
+        return new Order(1L, "store-01", "cust-1", "1메뉴", new BigDecimal("42.50"), status, acceptedBy, WHEN, WHEN);
     }
 
     @Test
     void placesAnOrder() throws Exception {
-        when(orderService.place(anyString(), anyString(), any(BigDecimal.class)))
+        when(orderService.place(anyString(), anyString(), anyString(), any(BigDecimal.class)))
                 .thenReturn(order(OrderStatus.PLACED, null));
 
         mockMvc.perform(post("/orders")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"storeId\":\"store-01\",\"customerId\":\"cust-1\",\"amount\":42.50}"))
+                        .content("{\"storeId\":\"store-01\",\"customerId\":\"cust-1\",\"menuName\":\"1메뉴\",\"amount\":42.50}"))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").value(1))
                 .andExpect(jsonPath("$.status").value("PLACED"));
@@ -60,7 +60,7 @@ class OrderControllerTest {
     void rejectsInvalidRequest() throws Exception {
         mockMvc.perform(post("/orders")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"storeId\":\"store-01\",\"customerId\":\"\",\"amount\":-1}"))
+                        .content("{\"storeId\":\"store-01\",\"customerId\":\"\",\"menuName\":\"1메뉴\",\"amount\":-1}"))
                 .andExpect(status().isBadRequest());
     }
 
