@@ -42,7 +42,11 @@ public class AcceptanceTimeout {
     public void expireUnaccepted() {
         Instant cutoff = Instant.now().minus(limit);
         List<Order> stale = orderService.list(OrderStatus.PLACED).stream()
-                .filter(order -> order.placedAt().isBefore(cutoff))
+                // A null placedAt is a row written before the field existed.
+                // Those predate the life cycle entirely, so they are old by
+                // definition — and more to the point, one of them must not
+                // be able to kill the sweep for every other order.
+                .filter(order -> order.placedAt() == null || order.placedAt().isBefore(cutoff))
                 .toList();
 
         for (Order order : stale) {
