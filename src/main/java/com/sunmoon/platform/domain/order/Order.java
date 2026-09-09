@@ -11,6 +11,7 @@ import java.time.Instant;
  */
 public record Order(
         Long id,
+        String storeId,
         String customerId,
         BigDecimal amount,
         OrderStatus status,
@@ -18,14 +19,18 @@ public record Order(
         Instant placedAt,
         Instant updatedAt) {
 
-    /** A newly placed order: the channel supplies who and how much, nothing else. */
-    public static Order placed(String customerId, BigDecimal amount) {
+    /**
+     * A newly placed order. {@code storeId} is required — an order that
+     * does not say which shop it is for cannot be routed to a counter, and
+     * defaulting it would mean guessing.
+     */
+    public static Order placed(String storeId, String customerId, BigDecimal amount) {
         Instant now = Instant.now();
-        return new Order(null, customerId, amount, OrderStatus.PLACED, null, now, now);
+        return new Order(null, storeId, customerId, amount, OrderStatus.PLACED, null, now, now);
     }
 
     public Order withId(long newId) {
-        return new Order(newId, customerId, amount, status, acceptedBy, placedAt, updatedAt);
+        return new Order(newId, storeId, customerId, amount, status, acceptedBy, placedAt, updatedAt);
     }
 
     /**
@@ -39,6 +44,6 @@ public record Order(
             throw new IllegalOrderTransitionException(id, status, next);
         }
         String accepter = next == OrderStatus.ACCEPTED ? deviceId : acceptedBy;
-        return new Order(id, customerId, amount, next, accepter, placedAt, Instant.now());
+        return new Order(id, storeId, customerId, amount, next, accepter, placedAt, Instant.now());
     }
 }

@@ -42,7 +42,7 @@ public class OrderController {
     @ApiResponse(responseCode = "201", description = "Placed")
     @ApiResponse(responseCode = "400", description = "Validation failed (blank customerId, non-positive amount)")
     public ResponseEntity<Order> create(@Valid @RequestBody CreateOrderRequest request) {
-        Order placed = orderService.place(request.customerId(), request.amount());
+        Order placed = orderService.place(request.storeId(), request.customerId(), request.amount());
         return ResponseEntity.status(HttpStatus.CREATED).body(placed);
     }
 

@@ -7,6 +7,7 @@ import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
 
 public record CreateOrderRequest(
+        @NotBlank String storeId,
         @NotBlank String customerId,
         @NotNull @DecimalMin(value = "0.0", inclusive = false) BigDecimal amount) {
 }
