@@ -38,6 +38,11 @@ dependencies {
     // and is far too heavy for a 2010 four-core box (umbrella ADR-0002).
     implementation("org.springframework.boot:spring-boot-starter-data-redis")
     runtimeOnly("org.postgresql:postgresql")
+    // Flyway rather than schema.sql. An idempotent CREATE can add a
+    // column; it cannot fix the rows already in the table, and that
+    // gap is what broke the expiry sweep once.
+    implementation("org.flywaydb:flyway-core")
+    runtimeOnly("org.flywaydb:flyway-database-postgresql")
 
     implementation("io.micrometer:micrometer-registry-prometheus")
     implementation("io.github.resilience4j:resilience4j-spring-boot3:2.2.0")

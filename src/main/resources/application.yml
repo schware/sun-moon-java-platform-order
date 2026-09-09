@@ -10,9 +10,13 @@ spring:
     url: jdbc:postgresql://localhost:5432/order_service
     username: sunmoon
     password: sunmoon_dev_pw
-  sql:
-    init:
-      mode: always
+  flyway:
+    enabled: true
+    # The table already exists on the deployed database, created by
+    # the schema.sql this replaces. Baseline adopts it as V1 rather
+    # than refusing to start on a non-empty schema.
+    baseline-on-migrate: true
+    baseline-version: 1
   data:
     redis:
       host: ${REDIS_HOST:localhost}
