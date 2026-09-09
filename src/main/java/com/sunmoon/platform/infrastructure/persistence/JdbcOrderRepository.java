@@ -3,25 +3,33 @@ package com.sunmoon.platform.infrastructure.persistence;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sunmoon.platform.domain.order.Order;
 import com.sunmoon.platform.domain.order.OrderRepository;
+import com.sunmoon.platform.domain.order.OrderStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
-// Postgres + JSONB — see docs/adr in the parent sun-moon-java-platform
-// repo. The whole Order is stored as one JSONB blob keyed by a
-// Postgres-assigned bigserial id, with customer_id pulled out as a plain
-// indexed column for lookups — same access pattern a document store
-// would give.
+/**
+ * Postgres + JSONB — see the umbrella repo's ADR-0001. The whole Order is
+ * one JSONB blob keyed by a Postgres bigserial id.
+ *
+ * <p>{@code customer_id} and {@code status} are pulled out as plain
+ * indexed columns because both are queried: terminals ask "what is
+ * PLACED", and that must not become a scan over parsed JSON.
+ */
 @Repository
 public class JdbcOrderRepository implements OrderRepository {
 
     private final JdbcTemplate jdbcTemplate;
     private final ObjectMapper objectMapper;
+    private final RowMapper<Order> mapper;
 
     public JdbcOrderRepository(JdbcTemplate jdbcTemplate, ObjectMapper objectMapper) {
         this.jdbcTemplate = jdbcTemplate;
         this.objectMapper = objectMapper;
+        this.mapper = (rs, rowNum) -> readJson(rs.getString("data"));
     }
 
     @Override
@@ -29,14 +37,33 @@ public class JdbcOrderRepository implements OrderRepository {
         Long id = jdbcTemplate.queryForObject("SELECT nextval('orders_id_seq')", Long.class);
         Order withId = order.withId(id);
         jdbcTemplate.update(
-                "INSERT INTO orders (id, customer_id, data) VALUES (?, ?, ?::jsonb)",
-                withId.id(), withId.customerId(), writeJson(withId));
+                "INSERT INTO orders (id, customer_id, status, data) VALUES (?, ?, ?, ?::jsonb)",
+                withId.id(), withId.customerId(), withId.status().name(), writeJson(withId));
         return withId;
     }
 
     @Override
     public List<Order> findAll() {
-        return jdbcTemplate.query("SELECT data FROM orders ORDER BY id", (rs, rowNum) -> readJson(rs.getString("data")));
+        return jdbcTemplate.query("SELECT data FROM orders ORDER BY id DESC", mapper);
+    }
+
+    @Override
+    public List<Order> findByStatus(OrderStatus status) {
+        return jdbcTemplate.query(
+                "SELECT data FROM orders WHERE status = ? ORDER BY id", mapper, status.name());
+    }
+
+    @Override
+    public Optional<Order> find(long id) {
+        return jdbcTemplate.query("SELECT data FROM orders WHERE id = ?", mapper, id)
+                .stream().findFirst();
+    }
+
+    @Override
+    public boolean update(Order order) {
+        return jdbcTemplate.update(
+                "UPDATE orders SET status = ?, data = ?::jsonb WHERE id = ?",
+                order.status().name(), writeJson(order), order.id()) > 0;
     }
 
     private String writeJson(Order order) {
