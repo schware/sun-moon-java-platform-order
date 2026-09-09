@@ -2,18 +2,19 @@ package com.sunmoon.platform.infrastructure.messaging;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 /**
  * Logs the event and nothing else.
  *
- * <p>This is a placeholder, and the flow it is standing in for is real:
- * a placed order has to reach the POS terminals, and an accepted one has
- * to reach KDS. Redis Pub/Sub is the intended carrier — Redis already runs
- * on the host — and this stays the default until the Device Server exists
- * to subscribe, so that nothing depends on a channel with no listener.
+ * <p>The fallback when Redis is not configured, so a machine with only a
+ * JDK and a database still runs this service. Set
+ * {@code sun-moon.events.redis=true} to publish for real — see
+ * {@link RedisEventPublisher}.
  */
 @Component
+@ConditionalOnProperty(name = "sun-moon.events.redis", havingValue = "false", matchIfMissing = true)
 public class InMemoryEventPublisher implements EventPublisher {
 
     private static final Logger log = LoggerFactory.getLogger(InMemoryEventPublisher.class);

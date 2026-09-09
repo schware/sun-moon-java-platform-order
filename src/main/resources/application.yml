@@ -13,6 +13,22 @@ spring:
   sql:
     init:
       mode: always
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+
+sun-moon:
+  order:
+    # How long a placed order waits for a terminal to accept it before
+    # it expires. Short by demo standards; a real store would tune it.
+    accept-timeout: ${ORDER_ACCEPT_TIMEOUT:PT3M}
+    accept-timeout-sweep: ${ORDER_ACCEPT_SWEEP:PT10S}
+  events:
+    # Publish order events to Redis so the Device Server can reach the
+    # terminals. False falls back to logging them, which is what a
+    # machine without Redis needs.
+    redis: ${EVENTS_REDIS:false}
 
 management:
   endpoints:

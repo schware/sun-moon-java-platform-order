@@ -33,6 +33,10 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("org.springframework.boot:spring-boot-starter-actuator")
     implementation("org.springframework.boot:spring-boot-starter-jdbc")
+    // Order events reach the Device Server through Redis Pub/Sub, which
+    // is already running on the host. Kafka would be the other answer
+    // and is far too heavy for a 2010 four-core box (umbrella ADR-0002).
+    implementation("org.springframework.boot:spring-boot-starter-data-redis")
     runtimeOnly("org.postgresql:postgresql")
 
     implementation("io.micrometer:micrometer-registry-prometheus")

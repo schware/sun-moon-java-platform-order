@@ -17,8 +17,16 @@ public enum OrderStatus {
     PLACED,
     /** A POS terminal took it. */
     ACCEPTED,
-    /** A POS terminal refused it. Terminal state. */
+    /** A POS terminal refused it, or no terminal was connected to offer it to. Terminal state. */
     REJECTED,
+    /**
+     * Nobody accepted it in time.
+     *
+     * <p>Separate from REJECTED on purpose: "the store said no" and "the
+     * store never answered" are different facts, and an operator looking
+     * at yesterday's orders needs to tell them apart. Terminal state.
+     */
+    EXPIRED,
     /** The kitchen finished it (KDS). */
     PRODUCED,
     /** Handed to delivery and on its way. */
@@ -28,11 +36,11 @@ public enum OrderStatus {
 
     public Set<OrderStatus> allowedNext() {
         return switch (this) {
-            case PLACED -> Set.of(ACCEPTED, REJECTED);
+            case PLACED -> Set.of(ACCEPTED, REJECTED, EXPIRED);
             case ACCEPTED -> Set.of(PRODUCED);
             case PRODUCED -> Set.of(DELIVERING);
             case DELIVERING -> Set.of(COMPLETED);
-            case REJECTED, COMPLETED -> Set.of();
+            case REJECTED, EXPIRED, COMPLETED -> Set.of();
         };
     }
 

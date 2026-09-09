@@ -64,6 +64,34 @@ class OrderStatusTest {
     }
 
     @Test
+    void anUnacceptedOrderCanExpire() {
+        Order expired = Order.placed("cust-1", BigDecimal.ONE).withId(1L)
+                .movedTo(OrderStatus.EXPIRED, null);
+
+        assertTrue(expired.status().isFinal());
+        // Nobody took it, so nobody is recorded as having taken it.
+        assertEquals(null, expired.acceptedBy());
+    }
+
+    /** Expiring is only for orders nobody answered — an accepted order is somebody's now. */
+    @Test
+    void anAcceptedOrderCannotExpire() {
+        Order accepted = Order.placed("cust-1", BigDecimal.ONE).withId(1L)
+                .movedTo(OrderStatus.ACCEPTED, "pos-01");
+
+        assertThrows(IllegalOrderTransitionException.class,
+                () -> accepted.movedTo(OrderStatus.EXPIRED, null));
+    }
+
+    @Test
+    void expiredAndRejectedAreDifferentEndings() {
+        Order base = Order.placed("cust-1", BigDecimal.ONE).withId(1L);
+
+        assertEquals(OrderStatus.EXPIRED, base.movedTo(OrderStatus.EXPIRED, null).status());
+        assertEquals(OrderStatus.REJECTED, base.movedTo(OrderStatus.REJECTED, "pos-01").status());
+    }
+
+    @Test
     void rejectingIsOnlyPossibleBeforeAcceptance() {
         Order accepted = Order.placed("cust-1", BigDecimal.ONE).withId(1L)
                 .movedTo(OrderStatus.ACCEPTED, "pos-01");
