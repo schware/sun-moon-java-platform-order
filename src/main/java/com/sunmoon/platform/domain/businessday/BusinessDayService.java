@@ -1,5 +1,6 @@
 package com.sunmoon.platform.domain.businessday;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.Clock;
@@ -27,10 +28,15 @@ public class BusinessDayService {
     private final BusinessDayRepository repository;
     private final Clock clock;
 
+    // Two constructors means Spring cannot pick one on its own, and the
+    // failure is at startup rather than at compile time — this annotation
+    // is load-bearing.
+    @Autowired
     public BusinessDayService(BusinessDayRepository repository) {
         this(repository, Clock.system(STORE_ZONE));
     }
 
+    /** Visible for tests, which need to control what "today" is. */
     BusinessDayService(BusinessDayRepository repository, Clock clock) {
         this.repository = repository;
         this.clock = clock;
