@@ -96,6 +96,22 @@ class BusinessDayServiceTest {
         assertThat(serviceAt(MORNING).close("store-01", "pos-01")).isEmpty();
     }
 
+    @Test
+    void openingAgainOnTheSameDayResumesThatDayRatherThanStartingASecondOne() {
+        BusinessDayService service = serviceAt(MORNING);
+        service.open("store-01", "pos-01");
+        service.close("store-01", "pos-01");
+
+        BusinessDayService.OpenResult again = service.open("store-01", "pos-01");
+
+        assertThat(again.outcome()).isEqualTo(BusinessDayService.Outcome.REOPENED);
+        assertThat(again.day().businessDate()).isEqualTo(LocalDate.of(2026, 9, 10));
+        assertThat(again.day().isOpen()).isTrue();
+        // One row per (매장, 영업일자) — the takings stay under one 매출일자.
+        assertThat(repository.rows).hasSize(1);
+        assertThat(service.current("store-01")).isPresent();
+    }
+
     private static final class InMemoryRepository implements BusinessDayRepository {
         private final List<BusinessDay> rows = new ArrayList<>();
 
@@ -110,8 +126,28 @@ class BusinessDayServiceTest {
         }
 
         @Override
+        public Optional<BusinessDay> find(String storeId, LocalDate businessDate) {
+            return rows.stream()
+                    .filter(d -> d.storeId().equals(storeId) && d.businessDate().equals(businessDate))
+                    .findFirst();
+        }
+
+        @Override
         public void insert(BusinessDay day) {
             rows.add(day);
+        }
+
+        @Override
+        public boolean reopen(String storeId, LocalDate businessDate) {
+            for (int i = 0; i < rows.size(); i++) {
+                BusinessDay d = rows.get(i);
+                if (d.storeId().equals(storeId) && d.businessDate().equals(businessDate)) {
+                    rows.set(i, new BusinessDay(
+                            d.storeId(), d.businessDate(), d.openedAt(), d.openedBy(), null, null));
+                    return true;
+                }
+            }
+            return false;
         }
 
         @Override

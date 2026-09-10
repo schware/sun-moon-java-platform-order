@@ -75,6 +75,19 @@ public class BusinessDayService {
             return new OpenResult(Outcome.ROLLED, fresh, day.businessDate());
         }
 
+        // 마감 pressed by mistake, or a break in the middle of the day:
+        // opening again on the same 영업일자 resumes it rather than
+        // starting a second one. There is only ever one row per
+        // (매장, 영업일자), and the takings stay under that one date.
+        Optional<BusinessDay> closedToday = repository.find(storeId, today);
+        if (closedToday.isPresent()) {
+            repository.reopen(storeId, today);
+            BusinessDay resumed = closedToday.get();
+            return new OpenResult(Outcome.REOPENED, new BusinessDay(
+                    resumed.storeId(), resumed.businessDate(),
+                    resumed.openedAt(), resumed.openedBy(), null, null), null);
+        }
+
         BusinessDay fresh = BusinessDay.opened(storeId, today, deviceId);
         repository.insert(fresh);
         return new OpenResult(Outcome.OPENED, fresh, null);
@@ -92,7 +105,7 @@ public class BusinessDayService {
                 day.storeId(), day.businessDate(), day.openedAt(), day.openedBy(), now, deviceId));
     }
 
-    public enum Outcome { OPENED, ROLLED, ALREADY_OPEN }
+    public enum Outcome { OPENED, REOPENED, ROLLED, ALREADY_OPEN }
 
     /** {@code closedDate} is the stale day that was closed to make room, or null. */
     public record OpenResult(Outcome outcome, BusinessDay day, LocalDate closedDate) {

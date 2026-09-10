@@ -49,6 +49,23 @@ public class JdbcBusinessDayRepository implements BusinessDayRepository {
     }
 
     @Override
+    public Optional<BusinessDay> find(String storeId, LocalDate businessDate) {
+        return jdbcTemplate.query(
+                        "SELECT " + COLUMNS + " FROM store_business_days "
+                                + "WHERE store_id = ? AND business_date = ?",
+                        MAPPER, storeId, Date.valueOf(businessDate))
+                .stream().findFirst();
+    }
+
+    @Override
+    public boolean reopen(String storeId, LocalDate businessDate) {
+        return jdbcTemplate.update(
+                "UPDATE store_business_days SET closed_at = NULL, closed_by = NULL "
+                        + "WHERE store_id = ? AND business_date = ?",
+                storeId, Date.valueOf(businessDate)) > 0;
+    }
+
+    @Override
     public void insert(BusinessDay day) {
         jdbcTemplate.update(
                 "INSERT INTO store_business_days (" + COLUMNS + ") VALUES (?, ?, ?, ?, ?, ?)",

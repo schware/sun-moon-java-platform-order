@@ -59,14 +59,18 @@ public class BusinessDayController {
     @PostMapping("/open")
     @Operation(summary = "개점",
             description = "영업일자가 지난 채로 열려 있었다면 그 날을 먼저 마감하고 오늘을 엽니다 — 응답의 "
-                    + "rolled=true와 closedDate가 그 사실을 알려줍니다.")
+                    + "rolled=true와 closedDate가 그 사실을 알려줍니다. 오늘 이미 마감했다면 그 영업일을 "
+                    + "다시 엽니다 (reopened=true, 200) — 매출은 같은 매출일자에 계속 쌓입니다.")
     @ApiResponse(responseCode = "201", description = "Opened")
+    @ApiResponse(responseCode = "200", description = "Reopened today's 영업일자 after a 마감")
     @ApiResponse(responseCode = "409", description = "Already open on today's 영업일자")
     public ResponseEntity<?> openStore(@Valid @RequestBody OpenCloseRequest request) {
         BusinessDayService.OpenResult result = service.open(request.storeId(), request.deviceId());
         return switch (result.outcome()) {
             case OPENED -> ResponseEntity.status(HttpStatus.CREATED).body(Map.of(
                     "day", result.day(), "rolled", false));
+            case REOPENED -> ResponseEntity.ok(Map.of(
+                    "day", result.day(), "rolled", false, "reopened", true));
             case ROLLED -> ResponseEntity.status(HttpStatus.CREATED).body(Map.of(
                     "day", result.day(), "rolled", true, "closedDate", result.closedDate().toString()));
             case ALREADY_OPEN -> ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of(

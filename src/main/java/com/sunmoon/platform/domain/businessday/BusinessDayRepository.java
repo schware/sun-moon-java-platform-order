@@ -11,7 +11,12 @@ public interface BusinessDayRepository {
 
     List<BusinessDay> findAllOpen();
 
+    Optional<BusinessDay> find(String storeId, LocalDate businessDate);
+
     void insert(BusinessDay day);
+
+    /** Clears the 마감 on a day that was closed, leaving 개점 as it was. */
+    boolean reopen(String storeId, LocalDate businessDate);
 
     boolean close(String storeId, LocalDate businessDate, Instant closedAt, String closedBy);
 }
