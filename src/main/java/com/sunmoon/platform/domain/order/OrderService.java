@@ -1,5 +1,8 @@
 package com.sunmoon.platform.domain.order;
 
+import com.sunmoon.platform.domain.businessday.BusinessDay;
+import com.sunmoon.platform.domain.businessday.BusinessDayService;
+import com.sunmoon.platform.domain.businessday.StoreClosedException;
 import com.sunmoon.platform.infrastructure.messaging.EventPublisher;
 import com.sunmoon.platform.infrastructure.messaging.OrderEvent;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
@@ -15,15 +18,28 @@ import java.util.Optional;
 public class OrderService {
 
     private final OrderRepository orderRepository;
+    private final BusinessDayService businessDays;
     private final EventPublisher eventPublisher;
 
-    public OrderService(OrderRepository orderRepository, EventPublisher eventPublisher) {
+    public OrderService(
+            OrderRepository orderRepository, BusinessDayService businessDays, EventPublisher eventPublisher) {
         this.orderRepository = orderRepository;
+        this.businessDays = businessDays;
         this.eventPublisher = eventPublisher;
     }
 
+    /**
+     * An order can only be taken by a shop that has 개점'd, and it is
+     * stamped with that shop's 영업일자 — the 매출일자 every sale is
+     * counted under.
+     *
+     * @throws StoreClosedException if the store is 마감 or never opened
+     */
     public Order place(String storeId, String customerId, String menuName, BigDecimal amount) {
-        Order saved = orderRepository.save(Order.placed(storeId, customerId, menuName, amount));
+        BusinessDay day = businessDays.current(storeId)
+                .orElseThrow(() -> new StoreClosedException(storeId));
+        Order saved = orderRepository.save(
+                Order.placed(storeId, customerId, menuName, amount, day.businessDate()));
         publish(OrderEvent.of(saved, null));
         return saved;
     }

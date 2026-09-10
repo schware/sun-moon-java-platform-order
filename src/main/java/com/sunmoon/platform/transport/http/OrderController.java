@@ -73,6 +73,12 @@ public class OrderController {
         return orderService.moveTo(id, request.status(), request.deviceId());
     }
 
+    @ExceptionHandler(com.sunmoon.platform.domain.businessday.StoreClosedException.class)
+    ResponseEntity<Map<String, String>> onStoreClosed(
+            com.sunmoon.platform.domain.businessday.StoreClosedException e) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error(e.getMessage()));
+    }
+
     @ExceptionHandler(IllegalOrderTransitionException.class)
     ResponseEntity<Map<String, String>> onIllegalTransition(IllegalOrderTransitionException e) {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(error(e.getMessage()));

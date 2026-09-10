@@ -40,7 +40,8 @@ class OrderControllerTest {
     private OrderService orderService;
 
     private static Order order(OrderStatus status, String acceptedBy) {
-        return new Order(1L, "store-01", "cust-1", "1메뉴", new BigDecimal("42.50"), status, acceptedBy, WHEN, WHEN);
+        return new Order(1L, "store-01", "cust-1", "1메뉴", new BigDecimal("42.50"), status, acceptedBy,
+                java.time.LocalDate.of(2026, 9, 10), WHEN, WHEN);
     }
 
     @Test

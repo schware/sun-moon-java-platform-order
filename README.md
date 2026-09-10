@@ -23,9 +23,30 @@ and this homelab CPU doesn't have it. See the umbrella repo's
 ## API
 
 - `POST /orders` — create an order (Jakarta Bean Validation + Resilience4j
-  around the event-publish call).
+  around the event-publish call). **409 if the store has not 개점'd.**
+- `GET /orders` (`?status=`), `GET /orders/{id}`
+- `PUT /orders/{id}/status` — the only way an order changes state
+- `POST /business-days/open`, `POST /business-days/close` — 개점 / 마감
+- `GET /business-days` — every store currently trading
+- `GET /business-days/{storeId}` — that store's state, including
+  `needsClosing`
 - `GET /actuator/health`, `GET /actuator/prometheus`
 - Swagger UI: `/swagger-ui/index.html`
+
+## 영업일
+
+Every order is stamped with the **영업일자** that was open when it
+arrived — not the calendar date of `placedAt`, because a shop trading
+past midnight is still on the same business day. A store that has not
+개점'd cannot take orders at all.
+
+Nothing closes a store on a timer. 마감 closes it; pressing 개점 on a day
+that has already gone stale closes that one first and says so
+(`rolled: true`). Until someone acts, `needsClosing` is how the POS knows
+to prompt. 영업일자 is computed in `Asia/Seoul`, not in the host's UTC.
+
+The full reasoning, including why this lives here rather than in BO
+(which owns 매장 기준 정보), is the umbrella repo's `docs/adr/0006`.
 
 ## Build & run
 

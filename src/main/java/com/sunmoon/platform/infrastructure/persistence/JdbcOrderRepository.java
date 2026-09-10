@@ -37,8 +37,11 @@ public class JdbcOrderRepository implements OrderRepository {
         Long id = jdbcTemplate.queryForObject("SELECT nextval('orders_id_seq')", Long.class);
         Order withId = order.withId(id);
         jdbcTemplate.update(
-                "INSERT INTO orders (id, store_id, customer_id, status, data) VALUES (?, ?, ?, ?, ?::jsonb)",
-                withId.id(), withId.storeId(), withId.customerId(), withId.status().name(), writeJson(withId));
+                "INSERT INTO orders (id, store_id, customer_id, status, business_date, data) "
+                        + "VALUES (?, ?, ?, ?, ?, ?::jsonb)",
+                withId.id(), withId.storeId(), withId.customerId(), withId.status().name(),
+                withId.businessDate() == null ? null : java.sql.Date.valueOf(withId.businessDate()),
+                writeJson(withId));
         return withId;
     }
 
