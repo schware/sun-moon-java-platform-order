@@ -17,6 +17,11 @@ import java.time.Instant;
  * transition from a replay: "it is ACCEPTED now" is not the same fact as
  * "it just became ACCEPTED", and the terminals care about the second one.
  * Null means the order was just placed.
+ *
+ * <p>Carries {@code kdsDeviceId} so the Device Server's subscriber can
+ * push an ACCEPTED order to one specific KDS terminal rather than every
+ * KDS at the store — null means no assignment, and the subscriber falls
+ * back to broadcasting.
  */
 public record OrderEvent(
         Long orderId,
@@ -27,11 +32,12 @@ public record OrderEvent(
         OrderStatus status,
         OrderStatus previousStatus,
         String acceptedBy,
+        String kdsDeviceId,
         Instant occurredAt) {
 
     public static OrderEvent of(Order order, OrderStatus previousStatus) {
         return new OrderEvent(
                 order.id(), order.storeId(), order.customerId(), order.menuName(), order.amount(),
-                order.status(), previousStatus, order.acceptedBy(), Instant.now());
+                order.status(), previousStatus, order.acceptedBy(), order.kdsDeviceId(), Instant.now());
     }
 }

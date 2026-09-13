@@ -40,13 +40,13 @@ class OrderControllerTest {
     private OrderService orderService;
 
     private static Order order(OrderStatus status, String acceptedBy) {
-        return new Order(1L, "store-01", "cust-1", "1메뉴", new BigDecimal("42.50"), status, acceptedBy,
+        return new Order(1L, "store-01", "cust-1", "1메뉴", new BigDecimal("42.50"), status, acceptedBy, null,
                 java.time.LocalDate.of(2026, 9, 10), WHEN, WHEN);
     }
 
     @Test
     void placesAnOrder() throws Exception {
-        when(orderService.place(anyString(), anyString(), anyString(), any(BigDecimal.class)))
+        when(orderService.place(anyString(), anyString(), anyString(), any(BigDecimal.class), nullable(String.class)))
                 .thenReturn(order(OrderStatus.PLACED, null));
 
         mockMvc.perform(post("/orders")

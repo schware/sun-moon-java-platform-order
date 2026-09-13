@@ -10,5 +10,6 @@ public record CreateOrderRequest(
         @NotBlank String storeId,
         @NotBlank String customerId,
         @NotBlank String menuName,
-        @NotNull @DecimalMin(value = "0.0", inclusive = false) BigDecimal amount) {
+        @NotNull @DecimalMin(value = "0.0", inclusive = false) BigDecimal amount,
+        String kdsDeviceId) {
 }

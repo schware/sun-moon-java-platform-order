@@ -35,11 +35,12 @@ public class OrderService {
      *
      * @throws StoreClosedException if the store is 마감 or never opened
      */
-    public Order place(String storeId, String customerId, String menuName, BigDecimal amount) {
+    public Order place(
+            String storeId, String customerId, String menuName, BigDecimal amount, String kdsDeviceId) {
         BusinessDay day = businessDays.current(storeId)
                 .orElseThrow(() -> new StoreClosedException(storeId));
         Order saved = orderRepository.save(
-                Order.placed(storeId, customerId, menuName, amount, day.businessDate()));
+                Order.placed(storeId, customerId, menuName, amount, kdsDeviceId, day.businessDate()));
         publish(OrderEvent.of(saved, null));
         return saved;
     }

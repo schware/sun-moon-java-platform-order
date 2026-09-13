@@ -14,6 +14,13 @@ import java.time.LocalDate;
  * arrived, which is not necessarily the calendar date of {@code placedAt}
  * — a shop trading past midnight is still on yesterday's business day.
  * Orders placed before 영업일 existed have none.
+ *
+ * <p>{@code kdsDeviceId} is which KDS terminal should see this order once
+ * accepted, set by whoever placed the order (today: the order channel's
+ * own catalog, which knows which station each menu item belongs to).
+ * Null means "no specific assignment" — the Device Server falls back to
+ * broadcasting to every KDS at the store, today's original behavior.
+ * Order does not resolve this itself; it only carries what it was told.
  */
 public record Order(
         Long id,
@@ -23,6 +30,7 @@ public record Order(
         BigDecimal amount,
         OrderStatus status,
         String acceptedBy,
+        String kdsDeviceId,
         LocalDate businessDate,
         Instant placedAt,
         Instant updatedAt) {
@@ -32,16 +40,16 @@ public record Order(
      * does not say which shop it is for cannot be routed to a counter, and
      * defaulting it would mean guessing.
      */
-    public static Order placed(
-            String storeId, String customerId, String menuName, BigDecimal amount, LocalDate businessDate) {
+    public static Order placed(String storeId, String customerId, String menuName, BigDecimal amount,
+            String kdsDeviceId, LocalDate businessDate) {
         Instant now = Instant.now();
-        return new Order(
-                null, storeId, customerId, menuName, amount, OrderStatus.PLACED, null, businessDate, now, now);
+        return new Order(null, storeId, customerId, menuName, amount, OrderStatus.PLACED, null, kdsDeviceId,
+                businessDate, now, now);
     }
 
     public Order withId(long newId) {
-        return new Order(
-                newId, storeId, customerId, menuName, amount, status, acceptedBy, businessDate, placedAt, updatedAt);
+        return new Order(newId, storeId, customerId, menuName, amount, status, acceptedBy, kdsDeviceId,
+                businessDate, placedAt, updatedAt);
     }
 
     /**
@@ -55,7 +63,7 @@ public record Order(
             throw new IllegalOrderTransitionException(id, status, next);
         }
         String accepter = next == OrderStatus.ACCEPTED ? deviceId : acceptedBy;
-        return new Order(
-                id, storeId, customerId, menuName, amount, next, accepter, businessDate, placedAt, Instant.now());
+        return new Order(id, storeId, customerId, menuName, amount, next, accepter, kdsDeviceId,
+                businessDate, placedAt, Instant.now());
     }
 }
