@@ -48,6 +48,20 @@ to prompt. 영업일자 is computed in `Asia/Seoul`, not in the host's UTC.
 The full reasoning, including why this lives here rather than in BO
 (which owns 매장 기준 정보), is the umbrella repo's `docs/adr/0006`.
 
+## Real-time push to terminals
+
+`EVENTS_REDIS=true` is what actually turns this on — the default
+(`sun-moon.events.redis: false`) publishes events to a log line and
+nowhere else, which is the right fallback for a machine with only a JDK
+and no Redis, but is easy to leave on by accident in production: nothing
+fails loudly, every terminal screen still works off its own ~15s poll,
+and "real-time" quietly becomes "up to 15 seconds late." That is exactly
+what happened on this project's own deploy server for a stretch —
+`docker-start-all.sh` didn't set it, and every redeploy that copied its
+`docker run` line carried the gap forward. Confirm it is on by tailing
+this service's logs after a deploy: `RedisEventPublisher`, not
+`InMemoryEventPublisher`, should be doing the logging.
+
 ## Build & run
 
 Requires JDK 21+, and PostgreSQL reachable at `localhost:5432` with an
@@ -63,7 +77,7 @@ java -jar build/libs/sun-moon-java-platform-order-0.1.0.jar
 
 ```
 docker build -t sun-moon-order .
-docker run --network host sun-moon-order
+docker run --network host -e EVENTS_REDIS=true sun-moon-order
 ```
 
 `--network host` (Linux) so the container reaches Postgres at
