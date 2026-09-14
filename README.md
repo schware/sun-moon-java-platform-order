@@ -30,6 +30,8 @@ and this homelab CPU doesn't have it. See the umbrella repo's
 - `GET /business-days` — every store currently trading
 - `GET /business-days/{storeId}` — that store's state, including
   `needsClosing`
+- `GET /sales` (`?from=&to=&storeId=`) — 일자별 매출 집계
+- `GET /sales/orders?businessDate=&storeId=` — the orders behind one day
 - `GET /actuator/health`, `GET /actuator/prometheus`
 - Swagger UI: `/swagger-ui/index.html`
 
@@ -47,6 +49,29 @@ to prompt. 영업일자 is computed in `Asia/Seoul`, not in the host's UTC.
 
 The full reasoning, including why this lives here rather than in BO
 (which owns 매장 기준 정보), is the umbrella repo's `docs/adr/0006`.
+
+## 매출
+
+`GET /sales` groups by 영업일자 × 매장 and is what BO's 매출 조회 screen
+reads. Postgres does the counting — `business_date` and `store_id` have
+been real indexed columns since V4/V5 exactly so this can group on them,
+and only `amount` comes out of the JSONB.
+
+**금액은 수락된 주문만 셉니다.** `REJECTED` (가게가 거절했다) and
+`EXPIRED` (가게가 아무 말도 안 했다) are orders that happened but not
+sales that happened, and someone reading a day's total needs those to be
+different numbers. They come back as their own counts, so a store that
+refused half of what arrived can still see that.
+
+Orders placed before 영업일 existed carry no `business_date` and are left
+out — they predate the sales model rather than belonging to an unknown
+day. Dates default to the last fortnight on the shop's Asia/Seoul
+calendar, not the host's UTC one.
+
+This is **not** the `Tr_header/Detail/Pay/Etc` structure the 설계서 calls
+for. That needs the 거래번호 nothing mints yet; this is a read model over
+the orders that exist today, and it keeps working once those tables
+arrive.
 
 ## Real-time push to terminals
 
